@@ -53,6 +53,8 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     static final int REQUEST_PERMISSION_GET_ACCOUNTS = 1003;
+    static final int PICK_FOLDER = 1004;
+
     private static final String[] SCOPES = { DriveScopes.DRIVE };
     private static final String PREF_ACCOUNT_NAME = "accountName";
     private ProgressBar mProgressBar;
@@ -111,7 +113,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
                     i.addCategory(Intent.CATEGORY_DEFAULT);
-                    startActivityForResult(Intent.createChooser(i, "Choose directory"), 9999);
+                    startActivityForResult(Intent.createChooser(i, "Choose directory"), PICK_FOLDER);
                 }
             }
         });
@@ -210,8 +212,8 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                     getResultsFromApi();
                 }
                 break;
-            case 9999:
-                if (requestCode == 9999) {
+            case PICK_FOLDER:
+                if (requestCode == PICK_FOLDER) {
                     Log.i("TAG", String.format("Return from DirChooser with result %d",
                             resultCode));
                     Log.i("Test", "Result URI " + data.getData());
