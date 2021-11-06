@@ -1,21 +1,21 @@
 package com.tech4bytes.android.gdrivesync;
 
 import android.accounts.AccountManager;
-import android.content.pm.PackageManager;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
@@ -28,21 +28,22 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.api.client.extensions.android.http.AndroidHttp;
-
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
-
 import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
+
 import org.apache.commons.io.FileUtils;
-import java.io.*;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -50,26 +51,25 @@ import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
 
-public class DriveActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
+public class DriveActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
 
-    GoogleAccountCredential mCredential = null;
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     static final int REQUEST_PERMISSION_GET_ACCOUNTS = 1003;
     static final int PICK_FOLDER = 1004;
-
-    private static final String[] SCOPES = { DriveScopes.DRIVE };
+    private static final String[] SCOPES = {DriveScopes.DRIVE};
     private static final String PREF_ACCOUNT_NAME = "accountName";
+    static String path;
+    GoogleAccountCredential mCredential = null;
+    java.io.File file2;
+    GoogleSignInAccount account;
+    Button uploadFileBtn, createFolderBtn, folderPickerBtn;
+    String TAG = "tech4bytes";
     private ProgressBar mProgressBar;
     private TextView mTextView;
+    private int calledFrom = 0;
 
-    java.io.File file2;
-    static String path;
-
-    GoogleSignInAccount account;
-    Button uploadFileBtn,createFolderBtn,folderPickerBtn;
-    private int calledFrom= 0;
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,29 +83,31 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                 getApplicationContext(), Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff());
 
-        path = getFilesDir().getAbsolutePath()+"/Template";
+        path = getFilesDir().getAbsolutePath() + "/Template";
         //path of the file that is to be uploaded
         isReadStoragePermissionGranted();
 
-        uploadFileBtn =(Button) findViewById(R.id.upload_file_btn);
-        createFolderBtn = (Button) findViewById(R.id.create_folder_btn);
+        uploadFileBtn = findViewById(R.id.upload_file_btn);
+        createFolderBtn = findViewById(R.id.create_folder_btn);
         folderPickerBtn = findViewById(R.id.folder_picker);
         createFolderBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 calledFrom = 1;
                 getResultsFromApi();
-                new DriveActivity.MakeDriveRequestTask(mCredential,DriveActivity.this).execute();//create app folder in drive
+                new DriveActivity.MakeDriveRequestTask(mCredential, DriveActivity.this).execute();//create app folder in drive
 
-            }});
+            }
+        });
 
         uploadFileBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 calledFrom = 2;
                 getResultsFromApi();
-                new DriveActivity.MakeDriveRequestTask2(mCredential,DriveActivity.this, null).execute();//upload q and responses xlsx files
-            }});
+                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, null).execute();//upload q and responses xlsx files
+            }
+        });
 
         folderPickerBtn.setOnClickListener(new View.OnClickListener() {
 
@@ -116,7 +118,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
 //            }
 
             public void onClick(View v) {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
                     i.addCategory(Intent.CATEGORY_DEFAULT);
                     startActivityForResult(Intent.createChooser(i, "Choose directory"), PICK_FOLDER);
@@ -138,48 +140,42 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
 
     }
 
-    String TAG = "tech4bytes";
-    public  boolean isReadStoragePermissionGranted() {
+    public boolean isReadStoragePermissionGranted() {
         if (Build.VERSION.SDK_INT >= 23) {
             if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE)
                     == PackageManager.PERMISSION_GRANTED) {
-                Log.v(TAG,"Permission is granted1");
+                Log.v(TAG, "Permission is granted1");
                 return true;
             } else {
 
-                Log.v(TAG,"Permission is revoked1");
+                Log.v(TAG, "Permission is revoked1");
                 ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 3);
                 return false;
             }
-        }
-        else { //permission is automatically granted on sdk<23 upon installation
-            Log.v(TAG,"Permission is granted1");
+        } else { //permission is automatically granted on sdk<23 upon installation
+            Log.v(TAG, "Permission is granted1");
             return true;
         }
     }
 
 
     public void getResultsFromApi() {
-        if (! isGooglePlayServicesAvailable()) {
+        if (!isGooglePlayServicesAvailable()) {
             acquireGooglePlayServices();
         } else if (mCredential.getSelectedAccountName() == null) {
             chooseAccount();
-        } else if (! isDeviceOnline()) {
+        } else if (!isDeviceOnline()) {
 
             Toast.makeText(getApplicationContext(),
-                    "No Network Connection Available" , Toast.LENGTH_SHORT).show();
-            Log.e(this.toString(),"No network connection available.");
-        }
-        else
-        {
+                    "No Network Connection Available", Toast.LENGTH_SHORT).show();
+            Log.e(this.toString(), "No network connection available.");
+        } else {
             //if everything is Ok
-            if (calledFrom == 2 )
-            {
-                new DriveActivity.MakeDriveRequestTask2(mCredential,DriveActivity.this, null).execute();//upload q and responses xlsx files
+            if (calledFrom == 2) {
+                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, null).execute();//upload q and responses xlsx files
             }
-            if (calledFrom == 1 )
-            {
-                new DriveActivity.MakeDriveRequestTask(mCredential,DriveActivity.this).execute();//create app folder in drive
+            if (calledFrom == 1) {
+                new DriveActivity.MakeDriveRequestTask(mCredential, DriveActivity.this).execute();//create app folder in drive
             }
         }
     }
@@ -214,10 +210,10 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     protected void onActivityResult(
             int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch(requestCode) {
+        switch (requestCode) {
             case REQUEST_GOOGLE_PLAY_SERVICES:
                 if (resultCode != RESULT_OK) {
-                    Log.e(this.toString(),"This app requires Google Play Services. Please install " +
+                    Log.e(this.toString(), "This app requires Google Play Services. Please install " +
                             "Google Play Services on your device and relaunch this app.");
 
                 } else {
@@ -281,12 +277,11 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     }
 
 
-
     private boolean isDeviceOnline() {
         ConnectivityManager connMgr =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        Log.e(this.toString(),"Checking if device");
+        Log.e(this.toString(), "Checking if device");
         return (networkInfo != null && networkInfo.isConnected());
 
     }
@@ -312,18 +307,17 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     void listFilesInDirectory(String directoryPath) {
         String path = directoryPath;
         String actual_path = path.split(":")[1];
-        path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+actual_path;
+        path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + actual_path;
         Log.d("Files", "Path: " + path);
         java.io.File directory = new java.io.File(path);
         java.io.File[] files = directory.listFiles();
-        Log.d("Files", "Size: "+ files.length);
-        for (int i = 0; i < files.length; i++)
-        {
+        Log.d("Files", "Size: " + files.length);
+        for (int i = 0; i < files.length; i++) {
             Log.d("Files", "FileName:" + files[i].getName() + "(" + files[i].isFile() + ")");
             Log.d("Files", "FileName:" + files[i].getName() + "-" + files[i].isFile() + "-" + files[i].length() + "-" + files[i].lastModified());
             calledFrom = 2;
             getResultsFromApi();
-            if(files[i].isFile()) {
+            if (files[i].isFile()) {
                 Log.d("Files", "Uploading file: " + files[i]);
                 new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, files[i]).execute();//upload q and responses xlsx filess
             }
@@ -345,13 +339,11 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     }
 
 
-
-
     private class MakeDriveRequestTask2 extends AsyncTask<Void, Void, List<String>> {
         private Drive mService = null;
         private Exception mLastError = null;
-        private Context mContext;
-        private java.io.File file;
+        private final Context mContext;
+        private final java.io.File file;
 
 
         MakeDriveRequestTask2(GoogleAccountCredential credential, Context context, java.io.File file) {
@@ -386,9 +378,9 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                             ((UserRecoverableAuthIOException) mLastError).getIntent(),
                             DriveActivity.REQUEST_AUTHORIZATION);
                 } else {
-                    Log.e(this.toString(),"The following error occurred:\n"+ mLastError.getMessage());
+                    Log.e(this.toString(), "The following error occurred:\n" + mLastError.getMessage());
                 }
-                Log.e(this.toString(),e+"");
+                Log.e(this.toString(), e + "");
             }
 
 
@@ -428,7 +420,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                             ((UserRecoverableAuthIOException) mLastError).getIntent(),
                             DriveActivity.REQUEST_AUTHORIZATION);
                 } else {
-                    mTextView.setText("The following error occurred:\n"+ mLastError.getMessage());
+                    mTextView.setText("The following error occurred:\n" + mLastError.getMessage());
                 }
             } else {
                 mTextView.setText("Request cancelled.");
@@ -455,12 +447,12 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             file2 = new java.io.File(file.getAbsolutePath());
             InputStream inputStream = getResources().openRawResource(R.raw.template);
             try {
-                FileUtils.copyInputStreamToFile(inputStream,file2);
+                FileUtils.copyInputStreamToFile(inputStream, file2);
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            FileContent mediaContent = new FileContent("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",file2);
+            FileContent mediaContent = new FileContent(getMimeType(file.getAbsolutePath()), file2);
 
 
             File file = mService.files().create(fileMetadata, mediaContent)
@@ -468,22 +460,21 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                     .execute();
 
 
-            Log.e(this.toString(),"File Created with ID:"+ file.getId());
+            Log.e(this.toString(), "File Created with ID:" + file.getId());
 
             Toast.makeText(getApplicationContext(),
-                    "File created:"+file.getId() , Toast.LENGTH_SHORT).show();
+                    "File created:" + file.getId(), Toast.LENGTH_SHORT).show();
         }
     }
-
 
 
     private class MakeDriveRequestTask extends AsyncTask<Void, Void, List<String>> {
         private Drive mService = null;
         private Exception mLastError = null;
-        private Context mContext;
+        private final Context mContext;
 
 
-        MakeDriveRequestTask(GoogleAccountCredential credential,Context context) {
+        MakeDriveRequestTask(GoogleAccountCredential credential, Context context) {
 
             mContext = context;
             HttpTransport transport = AndroidHttp.newCompatibleTransport();
@@ -516,9 +507,9 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                             ((UserRecoverableAuthIOException) mLastError).getIntent(),
                             DriveActivity.REQUEST_AUTHORIZATION);
                 } else {
-                    Log.e(this.toString(),"The following error occurred:\n"+ mLastError.getMessage());
+                    Log.e(this.toString(), "The following error occurred:\n" + mLastError.getMessage());
                 }
-                Log.e(this.toString(),e+"");
+                Log.e(this.toString(), e + "");
             }
             return null;
         }
@@ -533,9 +524,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         @Override
         protected void onPostExecute(List<String> output) {
             mProgressBar.setVisibility(View.GONE);
-
             mTextView.setText("Task Completed.");
-
         }
 
         @Override
@@ -553,7 +542,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                             ((UserRecoverableAuthIOException) mLastError).getIntent(),
                             DriveActivity.REQUEST_AUTHORIZATION);
                 } else {
-                    mTextView.setText("The following error occurred:\n"+ mLastError.getMessage());
+                    mTextView.setText("The following error occurred:\n" + mLastError.getMessage());
                 }
             } else {
                 mTextView.setText("Request cancelled.");
@@ -570,15 +559,9 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                     .execute();
             System.out.println("Folder ID: " + file.getId());
 
-            Log.e(this.toString(),"Folder Created with ID:"+ file.getId());
+            Log.e(this.toString(), "Folder Created with ID:" + file.getId());
             Toast.makeText(getApplicationContext(),
-                    "Folder created:"+file.getId() , Toast.LENGTH_SHORT).show();
+                    "Folder created:" + file.getId(), Toast.LENGTH_SHORT).show();
         }
-
-
     }
-
-
-
-
 }
