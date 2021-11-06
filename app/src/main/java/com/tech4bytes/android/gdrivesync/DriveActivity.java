@@ -39,6 +39,9 @@ import org.apache.commons.io.FileUtils;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.annotation.Nullable;
+
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -59,7 +62,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     static String path;
 
     GoogleSignInAccount account;
-    Button uploadFileBtn,createFolderBtn;
+    Button uploadFileBtn,createFolderBtn,folderPickerBtn;
     private int calledFrom= 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +81,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
 
         uploadFileBtn =(Button) findViewById(R.id.upload_file_btn);
         createFolderBtn = (Button) findViewById(R.id.create_folder_btn);
+        folderPickerBtn = findViewById(R.id.folder_picker);
         createFolderBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -95,6 +99,23 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                 new DriveActivity.MakeDriveRequestTask2(mCredential,DriveActivity.this).execute();//upload q and responses xlsx files
             }});
 
+        folderPickerBtn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+//            public void onClick(View v) {
+////                FolderPicker fp = new FolderPicker();
+////                fp.pickFolder();
+//            }
+
+            public void onClick(View v) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                    i.addCategory(Intent.CATEGORY_DEFAULT);
+                    startActivityForResult(Intent.createChooser(i, "Choose directory"), 9999);
+                }
+            }
+        });
+
 
 
 
@@ -102,7 +123,6 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         // check play service availability, device online status, and signed in account object
 
     }
-
 
     public void getResultsFromApi() {
         if (! isGooglePlayServicesAvailable()) {
@@ -188,6 +208,13 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             case REQUEST_AUTHORIZATION:
                 if (resultCode == RESULT_OK) {
                     getResultsFromApi();
+                }
+                break;
+            case 9999:
+                if (requestCode == 9999) {
+                    Log.i("TAG", String.format("Return from DirChooser with result %d",
+                            resultCode));
+                    Log.i("Test", "Result URI " + data.getData());
                 }
                 break;
         }
@@ -344,7 +371,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         }
 
         private void uploadFile() throws IOException {
-            File fileMetadata = new File();;
+            File fileMetadata = new File();
             fileMetadata.setName("Sample File");
             fileMetadata.setMimeType("application/vnd.google-apps.spreadsheet");
 
