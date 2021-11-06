@@ -6,21 +6,19 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -47,12 +45,6 @@ import org.apache.commons.io.FileUtils;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
-import android.content.pm.PackageManager;
-import android.os.Build;
-import android.support.v4.app.ActivityCompat;
-import android.util.Log;
-
-import javax.annotation.Nullable;
 
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
@@ -112,7 +104,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             public void onClick(View v) {
                 calledFrom = 2;
                 getResultsFromApi();
-                new DriveActivity.MakeDriveRequestTask2(mCredential,DriveActivity.this).execute();//upload q and responses xlsx files
+                new DriveActivity.MakeDriveRequestTask2(mCredential,DriveActivity.this, null).execute();//upload q and responses xlsx files
             }});
 
         folderPickerBtn.setOnClickListener(new View.OnClickListener() {
@@ -183,7 +175,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             //if everything is Ok
             if (calledFrom == 2 )
             {
-                new DriveActivity.MakeDriveRequestTask2(mCredential,DriveActivity.this).execute();//upload q and responses xlsx files
+                new DriveActivity.MakeDriveRequestTask2(mCredential,DriveActivity.this, null).execute();//upload q and responses xlsx files
             }
             if (calledFrom == 1 )
             {
@@ -328,8 +320,20 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         for (int i = 0; i < files.length; i++)
         {
             Log.d("Files", "FileName:" + files[i].getName() + "(" + files[i].isFile() + ")");
+            Log.d("Files", "FileName:" + files[i].getName() + "-" + files[i].isFile() + "-" + files[i].length() + "-" + files[i].lastModified());
+            calledFrom = 2;
+            getResultsFromApi();
+            if(files[i].isFile()) {
+                Log.d("Files", "Uploading file: " + files[i]);
+                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, files[i]).execute();//upload q and responses xlsx filess
+            }
         }
     }
+
+    boolean shouldUpload(String file) {
+        return true;
+    }
+
     void showGooglePlayServicesAvailabilityErrorDialog(
             final int connectionStatusCode) {
         GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
@@ -347,9 +351,10 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         private Drive mService = null;
         private Exception mLastError = null;
         private Context mContext;
+        private java.io.File file;
 
 
-        MakeDriveRequestTask2(GoogleAccountCredential credential,Context context) {
+        MakeDriveRequestTask2(GoogleAccountCredential credential, Context context, java.io.File file) {
 
             mContext = context;
             HttpTransport transport = AndroidHttp.newCompatibleTransport();
@@ -358,6 +363,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                     transport, jsonFactory, credential)
                     .setApplicationName("SynDrive")
                     .build();
+            this.file = file;
             // TODO change the application name to the name of your applicaiton
         }
 
@@ -429,14 +435,24 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             }
         }
 
+        // url = file path or whatever suitable URL you want.
+        public String getMimeType(String url) {
+            String type = null;
+            String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+            if (extension != null) {
+                type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+            }
+            return type;
+        }
+
         private void uploadFile() throws IOException {
             File fileMetadata = new File();
-            fileMetadata.setName("Sample File");
-            fileMetadata.setMimeType("application/vnd.google-apps.spreadsheet");
+            fileMetadata.setName(file.getName());
+            fileMetadata.setMimeType(getMimeType(file.getAbsolutePath()));
 
             // For mime type of specific file visit Drive Doucumentation
 
-            file2 = new java.io.File(path);
+            file2 = new java.io.File(file.getAbsolutePath());
             InputStream inputStream = getResources().openRawResource(R.raw.template);
             try {
                 FileUtils.copyInputStreamToFile(inputStream,file2);
@@ -457,8 +473,6 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             Toast.makeText(getApplicationContext(),
                     "File created:"+file.getId() , Toast.LENGTH_SHORT).show();
         }
-
-
     }
 
 
