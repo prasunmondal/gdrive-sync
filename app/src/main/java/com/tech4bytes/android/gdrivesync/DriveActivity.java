@@ -390,7 +390,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
             mService = new Drive.Builder(
                     transport, jsonFactory, credential)
-                    .setApplicationName("UsingDriveJavaApi")
+                    .setApplicationName("SynDrive")
                     .build();
             // TODO change the application name to the name of your applicaiton
         }
