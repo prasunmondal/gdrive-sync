@@ -87,3 +87,5 @@ lint/tmp/
 
 # Android Profiling
 *.hprof
+*.lock
+*.bin
