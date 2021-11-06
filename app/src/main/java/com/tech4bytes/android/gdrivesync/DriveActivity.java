@@ -1,14 +1,22 @@
 package com.tech4bytes.android.gdrivesync;
 
 import android.accounts.AccountManager;
+import android.content.pm.PackageManager;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -39,6 +47,10 @@ import org.apache.commons.io.FileUtils;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 
 import javax.annotation.Nullable;
 
@@ -66,6 +78,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     GoogleSignInAccount account;
     Button uploadFileBtn,createFolderBtn,folderPickerBtn;
     private int calledFrom= 0;
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +93,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
 
         path = getFilesDir().getAbsolutePath()+"/Template";
         //path of the file that is to be uploaded
+        isReadStoragePermissionGranted();
 
         uploadFileBtn =(Button) findViewById(R.id.upload_file_btn);
         createFolderBtn = (Button) findViewById(R.id.create_folder_btn);
@@ -118,13 +132,40 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             }
         });
 
-
-
+//
+//
+////check for permission
+//        if(ContextCompat.checkSelfPermission(this,
+//                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
+//            //ask for permission
+//            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, READ_EXTERNAL_STORAGE_PERMISSION_CODE);
+//        }
 
         getResultsFromApi();
         // check play service availability, device online status, and signed in account object
 
     }
+
+    String TAG = "tech4bytes";
+    public  boolean isReadStoragePermissionGranted() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                Log.v(TAG,"Permission is granted1");
+                return true;
+            } else {
+
+                Log.v(TAG,"Permission is revoked1");
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 3);
+                return false;
+            }
+        }
+        else { //permission is automatically granted on sdk<23 upon installation
+            Log.v(TAG,"Permission is granted1");
+            return true;
+        }
+    }
+
 
     public void getResultsFromApi() {
         if (! isGooglePlayServicesAvailable()) {
@@ -217,6 +258,9 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                     Log.i("TAG", String.format("Return from DirChooser with result %d",
                             resultCode));
                     Log.i("Test", "Result URI " + data.getData());
+                    Log.i("Test", "Result URI " + data.getData().getPath());
+//                    Log.i("Test", "Result URI " + data.getData());
+                    listFilesInDirectory(data.getData().getPath());
                 }
                 break;
         }
@@ -273,6 +317,19 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         }
     }
 
+    void listFilesInDirectory(String directoryPath) {
+        String path = directoryPath;
+        String actual_path = path.split(":")[1];
+        path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+actual_path;
+        Log.d("Files", "Path: " + path);
+        java.io.File directory = new java.io.File(path);
+        java.io.File[] files = directory.listFiles();
+        Log.d("Files", "Size: "+ files.length);
+        for (int i = 0; i < files.length; i++)
+        {
+            Log.d("Files", "FileName:" + files[i].getName() + "(" + files[i].isFile() + ")");
+        }
+    }
     void showGooglePlayServicesAvailabilityErrorDialog(
             final int connectionStatusCode) {
         GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
