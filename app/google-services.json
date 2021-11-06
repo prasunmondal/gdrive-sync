@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "743369157908",
+    "project_id": "try-gdrive-upload",
+    "storage_bucket": "try-gdrive-upload.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:743369157908:android:623f8c30fd20cf221b2601",
+        "android_client_info": {
+          "package_name": "com.tech4bytes.android.gdrivesync"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "743369157908-mjbtkm1ndh1ca84g8joql7rdjnjpj3bu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuAaf-cxgWi2ZZ6vww7wLrugi5KWQ3-B8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "743369157908-mjbtkm1ndh1ca84g8joql7rdjnjpj3bu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
