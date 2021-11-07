@@ -102,23 +102,9 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             }
         });
 
-        uploadFileBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                calledFrom = 2;
-                getResultsFromApi();
-                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, null).execute();//upload q and responses xlsx files
-            }
-        });
-
         folderPickerBtn.setOnClickListener(new View.OnClickListener() {
 
             @Override
-//            public void onClick(View v) {
-////                FolderPicker fp = new FolderPicker();
-////                fp.pickFolder();
-//            }
-
             public void onClick(View v) {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
@@ -174,10 +160,10 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         } else {
             //if everything is Ok
             if (calledFrom == 2) {
-                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, null).execute();//upload q and responses xlsx files
+//                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, null, null).execute();//upload q and responses xlsx files
             }
             if (calledFrom == 1) {
-                new DriveActivity.MakeDriveRequestTask(mCredential, DriveActivity.this).execute();//create app folder in drive
+//                new DriveActivity.MakeDriveRequestTask(mCredential, DriveActivity.this).execute();//create app folder in drive
             }
         }
     }
@@ -331,7 +317,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             getResultsFromApi();
             if (fileReference.file.isFile() && shouldUpload(fileReference)) {
                 Log.d("Files", "Uploading file: " + fileReference.file.getName());
-                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, fileReference.file).execute();//upload q and responses xlsx filess
+                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, fileReference, filemanager).execute();//upload q and responses xlsx filess
             }
         }
     }
@@ -356,10 +342,11 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         private Exception mLastError = null;
         private final Context mContext;
         private final java.io.File file;
+        private LocalFile fileRef;
+        private FileManager fm;
 
 
-        MakeDriveRequestTask2(GoogleAccountCredential credential, Context context, java.io.File file) {
-
+        MakeDriveRequestTask2(GoogleAccountCredential credential, Context context, LocalFile fileRef, FileManager fm) {
             mContext = context;
             HttpTransport transport = AndroidHttp.newCompatibleTransport();
             JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
@@ -367,7 +354,9 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                     transport, jsonFactory, credential)
                     .setApplicationName("SynDrive")
                     .build();
-            this.file = file;
+            this.file = fileRef.file;
+            this.fileRef = fileRef;
+            this.fm = fm;
             // TODO change the application name to the name of your applicaiton
         }
 
@@ -375,6 +364,8 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         protected List<String> doInBackground(Void... params) {
 
             try {
+                fileRef.sync_status = Sync_Status.UPLOADING;
+                fm.writeFileData(mContext);
                 uploadFile();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -414,7 +405,12 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             uploadFileBtn.setVisibility(View.VISIBLE);
             createFolderBtn.setVisibility(View.VISIBLE);
             mTextView.setText("Task Completed.");
-
+            fileRef.sync_status = Sync_Status.UPLOAD_COMPLETE;
+            try {
+                fm.writeFileData(mContext);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
