@@ -64,7 +64,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     GoogleAccountCredential mCredential = null;
     java.io.File file2;
     GoogleSignInAccount account;
-    Button uploadFileBtn, createFolderBtn, folderPickerBtn;
+    Button folderPickerBtn;
     String TAG = "tech4bytes";
     private ProgressBar mProgressBar;
     private TextView mTextView, filesViewer;
@@ -114,8 +114,15 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
 //        }
 
         getResultsFromApi();
+        syncAllDirectories();
         // check play service availability, device online status, and signed in account object
 
+    }
+
+    void syncAllDirectories() {
+        for(Directory dir: filemanager.folders_to_sync) {
+            listFilesInDirectory(dir.directory_path);
+        }
     }
 
     public boolean isReadStoragePermissionGranted() {

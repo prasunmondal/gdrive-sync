@@ -44,13 +44,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/filesViewer"
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:text="NA"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/progress_bar_drive" />
+        app:layout_constraintTop_toBottomOf="@+id/progress_bar_drive">
+
+        <TextView
+            android:id="@+id/filesViewer"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:text="NA" />
+    </LinearLayout>
 </android.support.constraint.ConstraintLayout>
