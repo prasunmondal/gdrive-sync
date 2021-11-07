@@ -69,6 +69,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     private ProgressBar mProgressBar;
     private TextView mTextView;
     private int calledFrom = 0;
+    FileManager filemanager = new FileManager();
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -249,6 +250,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                     Log.i("Test", "Result URI " + data.getData().getPath());
 //                    Log.i("Test", "Result URI " + data.getData());
                     listFilesInDirectory(data.getData().getPath());
+                    uploadAvailableFiles();
                 }
                 break;
         }
@@ -313,18 +315,23 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         java.io.File[] files = directory.listFiles();
         Log.d("Files", "Size: " + files.length);
         for (int i = 0; i < files.length; i++) {
-            Log.d("Files", "FileName:" + files[i].getName() + "(" + files[i].isFile() + ")");
             Log.d("Files", "FileName:" + files[i].getName() + "-" + files[i].isFile() + "-" + files[i].length() + "-" + files[i].lastModified());
+        }
+    }
+
+    void uploadAvailableFiles() {
+        List<com.tech4bytes.android.gdrivesync.File> files_available = filemanager.files_available;
+        for (com.tech4bytes.android.gdrivesync.File fileReference: files_available) {
             calledFrom = 2;
             getResultsFromApi();
-            if (files[i].isFile()) {
-                Log.d("Files", "Uploading file: " + files[i]);
-                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, files[i]).execute();//upload q and responses xlsx filess
+            if (fileReference.file.isFile() && shouldUpload(fileReference)) {
+                Log.d("Files", "Uploading file: " + fileReference.file.getName());
+                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, fileReference.file).execute();//upload q and responses xlsx filess
             }
         }
     }
 
-    boolean shouldUpload(String file) {
+    boolean shouldUpload(com.tech4bytes.android.gdrivesync.File file) {
         return true;
     }
 
