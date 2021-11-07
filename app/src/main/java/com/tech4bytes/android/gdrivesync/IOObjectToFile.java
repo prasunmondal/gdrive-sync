@@ -5,11 +5,12 @@ import android.content.Context;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 public class IOObjectToFile {
-    public void WriteObjectToFile(Context context, String fileName, Object object) {
+    public void WriteObjectToFile(Context context, String fileName, Object object) throws IOException {
         try {
             FileOutputStream fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
             ObjectOutputStream os = new ObjectOutputStream(fos);
@@ -19,10 +20,11 @@ public class IOObjectToFile {
         } catch (Exception e) {
             System.out.println("Error while writing object to file");
             System.out.println(e);
+            throw e;
         }
     }
 
-    public Object ReadObjectFromFile(Context context, String fileName) {
+    public Object ReadObjectFromFile(Context context, String fileName) throws IOException, ClassNotFoundException {
         try {
             FileInputStream fis = context.openFileInput(fileName);
             ObjectInputStream is = new ObjectInputStream(fis);
@@ -33,8 +35,8 @@ public class IOObjectToFile {
         } catch (Exception e) {
             System.out.println("Error while reading object from file");
             System.out.println(e);
+            throw e;
         }
-        return null;
     }
 
     public static void deleteObjectFromFile(String fileName)

@@ -91,6 +91,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         uploadFileBtn = findViewById(R.id.upload_file_btn);
         createFolderBtn = findViewById(R.id.create_folder_btn);
         folderPickerBtn = findViewById(R.id.folder_picker);
+        filemanager.readFileData(this);
         createFolderBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -243,14 +244,18 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                 }
                 break;
             case PICK_FOLDER:
-                if (requestCode == PICK_FOLDER) {
-                    Log.i("TAG", String.format("Return from DirChooser with result %d",
-                            resultCode));
-                    Log.i("Test", "Result URI " + data.getData());
-                    Log.i("Test", "Result URI " + data.getData().getPath());
-//                    Log.i("Test", "Result URI " + data.getData());
-                    listFilesInDirectory(data.getData().getPath());
-                    uploadAvailableFiles();
+                try {
+                    if (requestCode == PICK_FOLDER) {
+                        Log.i("TAG", String.format("Return from DirChooser with result %d",
+                                resultCode));
+                        Log.i("Test", "Result URI " + data.getData());
+                        Log.i("Test", "Result URI " + data.getData().getPath());
+                        filemanager.add_folder(this, data.getData().getPath());
+                        listFilesInDirectory(data.getData().getPath());
+                        uploadAvailableFiles();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
                 break;
         }
@@ -320,8 +325,8 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     }
 
     void uploadAvailableFiles() {
-        List<com.tech4bytes.android.gdrivesync.File> files_available = filemanager.files_available;
-        for (com.tech4bytes.android.gdrivesync.File fileReference: files_available) {
+        List<LocalFile> files_available = filemanager.files_available;
+        for (LocalFile fileReference: files_available) {
             calledFrom = 2;
             getResultsFromApi();
             if (fileReference.file.isFile() && shouldUpload(fileReference)) {
@@ -331,7 +336,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         }
     }
 
-    boolean shouldUpload(com.tech4bytes.android.gdrivesync.File file) {
+    boolean shouldUpload(LocalFile file) {
         return true;
     }
 
@@ -445,6 +450,10 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         }
 
         private void uploadFile() throws IOException {
+            if(file == null) {
+                return;
+            }
+
             File fileMetadata = new File();
             fileMetadata.setName(file.getName());
             fileMetadata.setMimeType(getMimeType(file.getAbsolutePath()));
