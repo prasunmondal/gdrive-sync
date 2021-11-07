@@ -88,19 +88,8 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         //path of the file that is to be uploaded
         isReadStoragePermissionGranted();
 
-        uploadFileBtn = findViewById(R.id.upload_file_btn);
-        createFolderBtn = findViewById(R.id.create_folder_btn);
         folderPickerBtn = findViewById(R.id.folder_picker);
         filemanager.readFileData(this);
-        createFolderBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                calledFrom = 1;
-                getResultsFromApi();
-                new DriveActivity.MakeDriveRequestTask(mCredential, DriveActivity.this).execute();//create app folder in drive
-
-            }
-        });
 
         folderPickerBtn.setOnClickListener(new View.OnClickListener() {
 
@@ -402,10 +391,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         @Override
         protected void onPreExecute() {
             mTextView.setText("");
-            createFolderBtn.setVisibility(View.INVISIBLE);
-            uploadFileBtn.setVisibility(View.INVISIBLE);
             mProgressBar.setVisibility(View.VISIBLE);
-
         }
 
         @Override
