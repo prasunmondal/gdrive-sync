@@ -45,18 +45,21 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <ScrollView
+        android:id="@+id/cards_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/progress_bar_drive">
+        app:layout_constraintTop_toBottomOf="@+id/progress_bar_drive"
+        tools:ignore="SpeakableTextPresentCheck">
 
-        <TextView
-            android:id="@+id/filesViewer"
+        <LinearLayout
+            android:id="@+id/cards_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="NA" />
+            android:orientation="vertical"></LinearLayout>
+
     </ScrollView>
 
 </android.support.constraint.ConstraintLayout>

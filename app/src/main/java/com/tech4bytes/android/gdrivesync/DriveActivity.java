@@ -20,7 +20,9 @@ import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -67,7 +69,8 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     Button folderPickerBtn;
     String TAG = "tech4bytes";
     private ProgressBar mProgressBar;
-    private TextView mTextView, filesViewer;
+    private TextView mTextView;
+    private LinearLayout cards_layout;
     private int calledFrom = 0;
     FileManager filemanager = new FileManager();
 
@@ -80,7 +83,6 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         account = getIntent().getParcelableExtra("ACCOUNT");
         mTextView = findViewById(R.id.drive_status);
         mProgressBar = findViewById(R.id.progress_bar_drive);
-        filesViewer = findViewById(R.id.filesViewer);
         mCredential = GoogleAccountCredential.usingOAuth2(
                 getApplicationContext(), Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff());
@@ -104,19 +106,8 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             }
         });
 
-//
-//
-////check for permission
-//        if(ContextCompat.checkSelfPermission(this,
-//                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
-//            //ask for permission
-//            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, READ_EXTERNAL_STORAGE_PERMISSION_CODE);
-//        }
-
         getResultsFromApi();
         syncAllDirectories();
-        // check play service availability, device online status, and signed in account object
-
     }
 
     void syncAllDirectories() {
@@ -309,16 +300,20 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     }
 
     private void updateFilesView() {
+        cards_layout = findViewById(R.id.cards_layout);
+        cards_layout.removeAllViews();
         String filesSummary = "";
         List<LocalFile> files_available = filemanager.files_available;
         for (LocalFile fileReference: files_available) {
             calledFrom = 2;
             getResultsFromApi();
             if (fileReference.file.isFile()) {
-                filesSummary += "\n" + fileReference.file.getName() + " - " + fileReference.sync_status;
+                filesSummary = fileReference.file.getName() + " - " + fileReference.sync_status;
+                TextView tv = new TextView(this);
+                tv.setText(filesSummary);
+                cards_layout.addView(tv);
             }
         }
-        filesViewer.setText(filesSummary);
     }
 
     void uploadAvailableFiles() {
