@@ -67,7 +67,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     Button uploadFileBtn, createFolderBtn, folderPickerBtn;
     String TAG = "tech4bytes";
     private ProgressBar mProgressBar;
-    private TextView mTextView;
+    private TextView mTextView, filesViewer;
     private int calledFrom = 0;
     FileManager filemanager = new FileManager();
 
@@ -80,6 +80,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         account = getIntent().getParcelableExtra("ACCOUNT");
         mTextView = findViewById(R.id.drive_status);
         mProgressBar = findViewById(R.id.progress_bar_drive);
+        filesViewer = findViewById(R.id.filesViewer);
         mCredential = GoogleAccountCredential.usingOAuth2(
                 getApplicationContext(), Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff());
@@ -297,6 +298,20 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         for (int i = 0; i < files.length; i++) {
             Log.d("Files", "FileName:" + files[i].getName() + "-" + files[i].isFile() + "-" + files[i].length() + "-" + files[i].lastModified());
         }
+        updateFilesView();
+    }
+
+    private void updateFilesView() {
+        String filesSummary = "";
+        List<LocalFile> files_available = filemanager.files_available;
+        for (LocalFile fileReference: files_available) {
+            calledFrom = 2;
+            getResultsFromApi();
+            if (fileReference.file.isFile()) {
+                filesSummary += "\n" + fileReference.file.getName() + " - " + fileReference.sync_status;
+            }
+        }
+        filesViewer.setText(filesSummary);
     }
 
     void uploadAvailableFiles() {
@@ -397,8 +412,8 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         @Override
         protected void onPostExecute(List<String> output) {
             mProgressBar.setVisibility(View.GONE);
-            uploadFileBtn.setVisibility(View.VISIBLE);
-            createFolderBtn.setVisibility(View.VISIBLE);
+//            uploadFileBtn.setVisibility(View.VISIBLE);
+//            createFolderBtn.setVisibility(View.VISIBLE);
             mTextView.setText("Task Completed.");
             fileRef.sync_status = Sync_Status.UPLOAD_COMPLETE;
             try {
@@ -406,6 +421,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            updateFilesView();
         }
 
         @Override

@@ -14,7 +14,6 @@
         android:layout_centerHorizontal="true"
         android:text="Loading.."
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.552"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/folder_picker" />
 
@@ -27,10 +26,10 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/drive_status" />
 
     <Button
         android:id="@+id/folder_picker"
@@ -44,4 +43,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/filesViewer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="NA"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/progress_bar_drive" />
 </android.support.constraint.ConstraintLayout>
