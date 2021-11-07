@@ -323,7 +323,16 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     }
 
     boolean shouldUpload(LocalFile file) {
-        return true;
+        String log = "Upload file check: Decision: ";
+        boolean decision = true;
+        if(file.sync_status == Sync_Status.UPLOAD_COMPLETE) {
+            log += "false. Reason: Sync status is already in 'UPLOAD_COMPLETE'";
+            decision = false;
+        } else {
+            log += "true.";
+        }
+        Log.d("", log);
+        return decision;
     }
 
     void showGooglePlayServicesAvailabilityErrorDialog(
