@@ -22,7 +22,6 @@ import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,6 +45,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -68,11 +68,11 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     GoogleSignInAccount account;
     Button folderPickerBtn;
     String TAG = "tech4bytes";
+    FileManager filemanager = new FileManager();
     private ProgressBar mProgressBar;
     private TextView mTextView;
     private LinearLayout cards_layout;
     private int calledFrom = 0;
-    FileManager filemanager = new FileManager();
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -81,6 +81,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         setContentView(R.layout.activity_drive);
 
         account = getIntent().getParcelableExtra("ACCOUNT");
+
         mTextView = findViewById(R.id.drive_status);
         mProgressBar = findViewById(R.id.progress_bar_drive);
         mCredential = GoogleAccountCredential.usingOAuth2(
@@ -90,7 +91,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         path = getFilesDir().getAbsolutePath() + "/Template";
         //path of the file that is to be uploaded
         isReadStoragePermissionGranted();
-
+//        getResultsFromApi();
         folderPickerBtn = findViewById(R.id.folder_picker);
         filemanager.readFileData(this);
 
@@ -105,13 +106,11 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
                 }
             }
         });
-
-        getResultsFromApi();
         syncAllDirectories();
     }
 
     void syncAllDirectories() {
-        for(Directory dir: filemanager.folders_to_sync) {
+        for (Directory dir : filemanager.folders_to_sync) {
             listFilesInDirectory(dir.directory_path);
         }
     }
@@ -148,10 +147,10 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         } else {
             //if everything is Ok
             if (calledFrom == 2) {
-//                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, null, null).execute();//upload q and responses xlsx files
+                new DriveActivity.MakeDriveRequestTask2(mCredential, DriveActivity.this, null, null).execute();//upload q and responses xlsx files
             }
             if (calledFrom == 1) {
-//                new DriveActivity.MakeDriveRequestTask(mCredential, DriveActivity.this).execute();//create app folder in drive
+                new DriveActivity.MakeDriveRequestTask(mCredential, DriveActivity.this).execute();//create app folder in drive
             }
         }
     }
@@ -302,23 +301,30 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     private void updateFilesView() {
         cards_layout = findViewById(R.id.cards_layout);
         cards_layout.removeAllViews();
-        String filesSummary = "";
+        List<TextView> done_cards = new ArrayList<>();
         List<LocalFile> files_available = filemanager.files_available;
-        for (LocalFile fileReference: files_available) {
+        for (LocalFile fileReference : files_available) {
             calledFrom = 2;
             getResultsFromApi();
             if (fileReference.file.isFile()) {
-                filesSummary = fileReference.file.getName() + " - " + fileReference.sync_status;
+                String filesSummary = fileReference.file.getName() + " - " + fileReference.sync_status;
                 TextView tv = new TextView(this);
                 tv.setText(filesSummary);
-                cards_layout.addView(tv);
+                if (shouldUpload(fileReference)) {
+                    cards_layout.addView(tv);
+                } else {
+                    done_cards.add(tv);
+                }
             }
+        }
+        for (TextView tv : done_cards) {
+            cards_layout.addView(tv);
         }
     }
 
     void uploadAvailableFiles() {
         List<LocalFile> files_available = filemanager.files_available;
-        for (LocalFile fileReference: files_available) {
+        for (LocalFile fileReference : files_available) {
             calledFrom = 2;
             getResultsFromApi();
             if (fileReference.file.isFile() && shouldUpload(fileReference)) {
@@ -331,7 +337,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
     boolean shouldUpload(LocalFile file) {
         String log = "Upload file check: Decision: ";
         boolean decision = true;
-        if(file.sync_status == Sync_Status.UPLOAD_COMPLETE) {
+        if (file.sync_status == Sync_Status.UPLOAD_COMPLETE) {
             log += "false. Reason: Sync status is already in 'UPLOAD_COMPLETE'";
             decision = false;
         } else {
@@ -353,10 +359,10 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
 
 
     private class MakeDriveRequestTask2 extends AsyncTask<Void, Void, List<String>> {
-        private Drive mService = null;
-        private Exception mLastError = null;
         private final Context mContext;
         private final java.io.File file;
+        private Drive mService = null;
+        private Exception mLastError = null;
         private LocalFile fileRef;
         private FileManager fm;
 
@@ -459,7 +465,7 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
         }
 
         private void uploadFile() throws IOException {
-            if(file == null) {
+            if (file == null) {
                 return;
             }
 
@@ -494,9 +500,9 @@ public class DriveActivity extends AppCompatActivity implements EasyPermissions.
 
 
     private class MakeDriveRequestTask extends AsyncTask<Void, Void, List<String>> {
+        private final Context mContext;
         private Drive mService = null;
         private Exception mLastError = null;
-        private final Context mContext;
 
 
         MakeDriveRequestTask(GoogleAccountCredential credential, Context context) {
